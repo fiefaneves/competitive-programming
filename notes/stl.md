@@ -12,15 +12,73 @@ The Standard Template Library (STL) is a powerful library in C++ that provides g
 - **Unordered Containers**: `unordered_set`, `unordered_map`
 - **Adapters**: `stack`, `queue`, `priority_queue`
 
-#### `vector`
-- when creating a vector, for memory reasons, it's best to create it with the size you already need.
+#### `vector` -> dinamic array
+- stores elements in a contiguos block of memory (side-by-side)
+- uses two main internal variables: 
+    - `size` -> how many elements it currently holds
+    - `capacity` -> how much space is currently allocated in memory 
+- when the size reach the capacity and you add a new element, the vector double his capacity, so, when creating a vector, for memory reasons, it's best to create it with the size you already need.
+- operations:
+    - random access -> `v[i]`, `front()`, `back()` -> O(1)
+    - insert/delete at the end -> `push_back()`, `emplace_back()`, `pop_back()` -> amortized O(1)
+    - insert/delete in the middle or front -> `insert()`, `erase()` -> O(n) -> requires shifting
+    - size and capacity check -> `size()`, `capacity()` -> O(1)
+- advantages -> random access instantly
+    - It should be your default choice for 99% of competitive programming problems.
+- disadvantages -> slow insertions and deletions at the front or middle, because it has to shift everything else (if you need to insert/delete at the front frequently, use `deque`)
+
 - if you insert somethig further to the left, the API copies each os the numbers to the right and inserts the element. (Linear cost)
 - `push_back()` has a constant cost.
 
-#### `set`
-- Search, insert, and delete in O(log n) time
+#### `list` -> doubly linked list
+- stores each element in a isolated node em some random memory location. 
+- loads three things:
+    - the value
+    - a pointer pointing to the next value
+    - a pointer pointing to the previous value
+- operations: 
+    - access in the ends -> `front()`, `back()` -> O(1)
+    - access in the middle -> does not exist
+    - insert/delete in the ends -> `push_back()`, `push_front()`, `pop_back()` and `pop_front()` -> O(1)
+    - insert/delete in the middle -> `insert()` and `erase()` -> O(1)*
+    - `size()` -> O(1)
+- when to use - advantages -> insert and delete elements from the middle without need to shift the others.
+    - only use when the problem evolves many inserts and delections in the middle
+- disadvantages -> no random access (list[n] does not exist).
+
+#### `deque`-> double ended queue
+- allows incredibly fast insertion and deletion at both its beginning and its end
+- unlike a vector, it does not store all elements in a single contiguous memory block, it uses a sequence of individually allocated fixed-size arrays (chunks) and keeps a central array of pointers (a "map") to track them. when it runs out of space at the front or back, it simply allocates a new chunk and updates the pointer map.
+- operations:
+    - random access -> `dq[i]`, `front()`, `back()` -> O(1)
+    - insert/delete at BOTH ends -> `push_front()`, `push_back()`, `pop_front()`, `pop_back()` -> O(1)
+    - insert/delete in the middle -> `insert()`, `erase()` -> O(N) (requires shifting elements, similar to a vector).
+    - size and empty check -> `size()`, `empty()` -> O(1)
+- advantages:
+    - the Best of Both Worlds: It gives you the O(1) random access of a vector AND the O(1) front insertion/deletion of a list.
+    - it is the absolute standard choice for Sliding Window Maximum/Minimum algorithms and 0-1 BFS
+- disadvantages:
+    - slightly slower than a vector for purely sequential iteration because the CPU cache has to jump between different memory chunks.
+    - memory overhead: It consumes more memory than a vector due to the complex internal pointer structure.
+    - since memory is not strictly contiguous, you cannot use C-style pointer arithmetic (&dq[0] + i) safely
+- if the problem does not require insertions or deletions at the front, always use `vector`.
+
+#### `set` -> Ordered Collection of Unique Elements
 - Does not allow duplicates.
 - Elements are always sorted in ascending order by default
+- under the hood -> its usually implemented as a self-balancing binary search tree.
+- every time you insert a number, the tree navigates left or right and re-balances itself
+- operations:
+    - search -> `find()`, `count()` -> O(log n)
+    - insert -> `insert()`, `emplace()` -> O(log n)
+    - remove -> `erase()` -> O(log n)
+    - size and empty check -> `size()`, `empty()` -> O(1)
+- advantages:
+    - Native de-duplication
+    - always sorted -> you can iterate through a set from `begin()`to `end()` and the elements will come out in perfect sorted sorder.
+- disadvantages:
+    - no random access
+    - high memory overhead -> each element store pointers to its parent, left child and right child
 ```python
 #include <iostream>
 #include <set>
@@ -42,6 +100,71 @@ int main() {
     return 0;
 }
 ```
+
+#### `map` -> Ordered Key-Value Dictionary
+- represents a collection of key-value pairs (like a dictionary), automatically sorted by the unique keys.
+- very similar to the set, but stores a `pair<const Key, Value>` and the tree is balanced strictly based on the key.
+- operations:
+    - access/insert a value by its key -> `m[key]` -> O(log n)
+    - search for a key -> `find()`, `count()` -> O(log n)
+    - remove a pair -> `erase()` -> O(log n)
+- advantages -> extremaly powerful counting (e.g. counting how many times a string appears) or mapping complex data types (like mapping a string name to an ind ID)
+- disadvantages -> memory overhead and O(log n) operational cost. 
+
+#### `unordered_set` -> Unsorted Collection of Unique Elements
+- Operations:
+    - Search for an element -> `find()`, `count()` -> Average O(1), Worst case O(N)
+    - Insert an element -> `insert()`, `emplace()` -> Average O(1), Worst case O(N)
+    - remove an element -> `erase()` -> Average O(1), Worst case O(N)
+- advantages -> Incredibly fast for checking if an element exists. (O(1))
+- disadvantages -> no order
+
+#### `unordered_map` -> Unsorted Key-Value Dictionary
+- Operations:
+    - access/insert a value by its key -> `m[key]` -> Average O(1), Worst case O(N)
+    - search for a key -> `find()`, `count()` -> Average O(1), Worst case O(N)
+    - remove a pair -> `erase()` -> Average O(1), Worst case O(N)
+- advantages -> The absolute fastest way to map a key to a value or count frequencies of elements, assuming a good hash function.
+- disadvantages -> consumes more memory because it needs to maintain the array of buckets even if they are empty.
+
+#### `queue` -> First-In First-Out
+- operations:
+    - access the front element -> `front()` -> O(1)
+    - access the back element -> `back()` -> O(1)
+    - insert at the end -> `push()`, `emplace()` -> O(1)
+    - remove from the front -> `pop()`-> O(1) 
+        - does not return the element, only removes it
+        - to know the element, you must call `front()` before `pop()`
+    - size and empty check ->  `śize()`, `empty()` -> O(1)
+- advantages -> extremely fast, enforces strict logical rules and essential for BFS (Breadth-First Search) algorithms.
+- disadvantages -> no random access and no iterators (the only way to read all elements is by popping them out one by one until the queue is empty)
+
+####  `stack` -> Last-In First-Out
+- operations:
+    - access the top element -> `top()` -> O(1)
+    - insert at the top -> `push()`, `emplace()` -> O(1)
+    - remove from the top -> `pop()` -> O(1)
+    - size and empty check -> `size()`, `empty()` -> O(1)
+- advantages -> DFS (Depth-First Search), parsing/matching problems and powerful monotonic stack technique.
+- disadvantages -> no random access and no iterators (same as the queue).
+
+#### `priority_queue` -> max-heap
+- represents a queue where elements are strictly ordered by their "priority" (by default in c++, the largest element is always at the front/top)
+- it uses heap algorithms (`push_heap`, `pop_heap`) to organize the vector as a Binary Tree mapped inside an array, this guarantees the maximum element is always at the root.
+- operations:
+    - access the top (largest) element -> `top()` -> O(1)
+    - insert an element -> `push()`, `emplace()` -> O(log N)
+    - remove the top element -> `pop()` -> O(log N)
+    - size and empty check -> `size()`, `empty()` -> O(1)
+- advantages:
+    - dynamically maintains the maximum (or minimum) element as you constantly add and remove items.
+    - dijkstra's algorithm (shortest path - min heap), prim's algorithm (minimum spanning tree) and complex greedy algorithms
+    ```cpp
+    // Creates a Min-Heap (smallest element on top)
+    priority_queue<int, vector<int>, greater<int>> pq;
+    ```
+- disadvantages:
+    - no random access, no iterators and logarithmic overhead (it rearranges the internal tree on every insertion/deletion - O(log n))
 
 ### Iterators
 - Input, output, forward, bidirectional, and random-access iterators
